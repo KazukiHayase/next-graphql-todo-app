@@ -1,14 +1,21 @@
-import React, { useCallback, useEffect, useState } from "react";
-import Button from '@mui/material/Button';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import Paper from '@mui/material/Paper';
-import { Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, TextField } from "@mui/material";
+import React, { useEffect, useState } from "react";
+import Button from "@mui/material/Button";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import Paper from "@mui/material/Paper";
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+} from "@mui/material";
 import axios from "axios";
+import { useRouter } from "next/router";
 
 type Todo = {
   id: number;
@@ -17,91 +24,91 @@ type Todo = {
   updated_at: string;
   description: string;
   user_id: string;
-}
+};
 
-const endpoint = 'http://localhost:8888/v1/graphql';
+const restUrl = "http://localhost:8888/api/rest";
 
 const headers = {
   "content-type": "application/json",
   "x-hasura-admin-secret": "secret",
 };
 
-const getQuery = {
-  "operationName": "FetchTasks",
-  "query": `query FetchTasks { tasks { id name description created_at updated_at user_id } }`,
-  "variables": {}
-};
-
 const IndexPage = () => {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [newTodo, setNewTodo] = useState<string>('');
+  const [newTodo, setNewTodo] = useState({ name: "", description: "" });
   const [todoGroup, setTodoGroup] = useState<Array<Todo>>([]);
 
   const openModal = () => {
-    setOpen(true)
-  }
+    setOpen(true);
+  };
 
   const closeModal = () => {
-    setNewTodo('');
     setOpen(false);
-  }
+  };
 
   useEffect(() => {
     getTodo();
-  }, [])
+  }, []);
 
   useEffect(() => {
     setTodoGroup(todoGroup);
   }, [todoGroup]);
 
   const getTodo = () => {
-    axios(
-      {
-        url: endpoint,
-        method: 'post',
-        headers: headers,
-        data: getQuery,
-      })
+    axios({
+      url: restUrl + "/tasks",
+      method: "get",
+      headers: headers,
+    })
       .then((res) => {
-        setTodoGroup(res.data.data.tasks)
+        setTodoGroup(res.data.tasks);
       })
       .catch((err) => {
         console.warn(err);
       });
-  }
+  };
 
-  const updateTodo = (todo: Todo) => { console.dir(todo); };
+  const updateTodo = (todo: Todo) => {
+    console.dir(todo);
+  };
 
-  const deleteTodo = (todo: Todo) => { console.dir(todo); };
+  const deleteTodo = (todo: Todo) => {
+    console.dir(todo);
+  };
 
   const createTodo = () => {
-    // const tmp: Todo = {
-    //   id: null,
-    //   todo: newTodo,
-    //   update: true,
-    //   delete: true,
-    // };
-    // todoGroup.push(tmp);
-    // count++; // 後で状態管理にする
-    // axios.post('/api/rest/tasks', tmp)
-    // .then((res) => {
-    //   console.log(res);
-    // });
-    // closeModal();
-  }
+    axios({
+      url: restUrl + "/tasks",
+      method: "post",
+      headers,
+      data: JSON.stringify(newTodo),
+    })
+      .then((res) => {
+        setTodoGroup([...todoGroup, res.data.addTask]);
+      })
+      .catch((err) => {
+        console.warn(err);
+      })
+      .finally(() => closeModal());
+  };
 
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setNewTodo(event.target.value);
+  const changeName = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const name: string = e.target.value;
+    setNewTodo({ ...newTodo, name });
+  };
+
+  const changeDescription = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const description: string = e.target.value;
+    setNewTodo({ ...newTodo, description });
   };
 
   return (
     <>
       <div>一覧</div>
       <div>
-        <Button
-          variant="contained"
-          onClick={openModal}
-        >新規作成
+        <Button variant="contained" onClick={openModal}>
+          新規作成
         </Button>
       </div>
       <TableContainer component={Paper}>
@@ -119,34 +126,28 @@ const IndexPage = () => {
           </TableHead>
           <TableBody>
             {todoGroup.map((todo) => (
-              <TableRow
-                key={todo.id}
-              >
+              <TableRow key={todo.id}>
                 <TableCell component="th" scope="todo">
                   {todo.name}
                 </TableCell>
-                <TableCell>
-                  {todo.created_at}
-                </TableCell>
-                <TableCell>
-                  {todo.updated_at}
-                </TableCell>
-                <TableCell>
-                  {todo.description}
-                </TableCell>
-                <TableCell>
-                  {todo.user_id}
-                </TableCell>
+                <TableCell>{todo.created_at}</TableCell>
+                <TableCell>{todo.updated_at}</TableCell>
+                <TableCell>{todo.description}</TableCell>
+                <TableCell>{todo.user_id}</TableCell>
                 <TableCell>
                   <Button
-                    onClick={() => updateTodo(todo)}
-                  >更新
+                    onClick={() =>
+                      router.push({
+                        pathname: "/update/[id]",
+                        query: { id: todo.id },
+                      })
+                    }
+                  >
+                    更新
                   </Button>
                 </TableCell>
                 <TableCell>
-                  <Button
-                    onClick={() => deleteTodo(todo)}
-                  >削除</Button>
+                  <Button onClick={() => deleteTodo(todo)}>削除</Button>
                 </TableCell>
               </TableRow>
             ))}
@@ -159,12 +160,21 @@ const IndexPage = () => {
           <TextField
             autoFocus
             margin="dense"
-            name="newTodo"
             type="text"
             fullWidth
             variant="standard"
-            value={newTodo}
-            onChange={handleChange}
+            label="タイトル"
+            value={newTodo.name}
+            onChange={changeName}
+          />
+          <TextField
+            margin="dense"
+            type="text"
+            label="内容"
+            fullWidth
+            variant="standard"
+            value={newTodo.description}
+            onChange={changeDescription}
           />
         </DialogContent>
         <DialogActions>
@@ -174,6 +184,6 @@ const IndexPage = () => {
       </Dialog>
     </>
   );
-}
+};
 
-export default IndexPage
+export default IndexPage;
