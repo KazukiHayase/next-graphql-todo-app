@@ -29,7 +29,7 @@ services:
         condition: service_healthy
     restart: on-failure:10
     environment:
-      HASURA_GRAPHQL_DATABASE_URL: ${HASURA_GRAPHQL_DATABASE_URL:-postgres://hasura:secret@db:5432/postgres}
+      HASURA_GRAPHQL_DATABASE_URL: postgres://hasura:secret@db:5432/postgres
       HASURA_GRAPHQL_ENABLE_CONSOLE: "false"
       HASURA_GRAPHQL_DEV_MODE: "true"
       HASURA_GRAPHQL_ENABLED_LOG_TYPES: startup, http-log, webhook-log, websocket-log, query-log
