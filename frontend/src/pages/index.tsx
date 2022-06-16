@@ -17,7 +17,7 @@ import {
 import axios from "axios";
 import { useRouter } from "next/router";
 
-type Todo = {
+export type Todo = {
   id: number;
   name: string;
   created_at: string;
@@ -26,9 +26,9 @@ type Todo = {
   user_id: string;
 };
 
-const restUrl = "http://localhost:8888/api/rest";
+export const restUrl = "http://localhost:8888/api/rest";
 
-const headers = {
+export const headers = {
   "content-type": "application/json",
   "x-hasura-admin-secret": "secret",
 };
@@ -59,22 +59,28 @@ const IndexPage = () => {
     axios({
       url: restUrl + "/tasks",
       method: "get",
-      headers: headers,
+      headers,
     })
       .then((res) => {
         setTodoGroup(res.data.tasks);
       })
       .catch((err) => {
-        console.warn(err);
+        console.error(err);
       });
   };
 
-  const updateTodo = (todo: Todo) => {
-    console.dir(todo);
-  };
-
   const deleteTodo = (todo: Todo) => {
-    console.dir(todo);
+    axios({
+      url: restUrl + "/tasks/" + todo.id,
+      method: "delete",
+      headers,
+    })
+      .then(() => {
+        getTodo();
+      })
+      .catch((err) => {
+        console.error(err);
+      });
   };
 
   const createTodo = () => {
@@ -88,7 +94,7 @@ const IndexPage = () => {
         setTodoGroup([...todoGroup, res.data.addTask]);
       })
       .catch((err) => {
-        console.warn(err);
+        console.error(err);
       })
       .finally(() => closeModal());
   };
