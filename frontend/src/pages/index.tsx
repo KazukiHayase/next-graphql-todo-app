@@ -70,6 +70,7 @@ const IndexPage = () => {
   };
 
   const deleteTodo = (todo: Todo) => {
+    alert("削除します");
     axios({
       url: restUrl + "/tasks/" + todo.id,
       method: "delete",

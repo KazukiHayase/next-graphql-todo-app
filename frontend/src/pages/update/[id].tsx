@@ -2,8 +2,7 @@ import axios from "axios";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { restUrl, headers, Todo } from "../index";
-import { Button, TextField } from "@mui/material";
-import { ENETRESET } from "constants";
+import { Button, TextField, Box } from "@mui/material";
 
 const UpdatePage = () => {
   const router = useRouter();
@@ -56,33 +55,53 @@ const UpdatePage = () => {
   };
 
   const update = () => {
-    console.log(1);
+    axios({
+      url: restUrl + "/tasks/" + todo.id,
+      method: "put",
+      headers,
+      data: JSON.stringify({
+        taskId: todo.id,
+        name: updateParam.name,
+        description: updateParam.description,
+      }),
+    })
+      .then((res) => {
+        if (res.status == 200) {
+          alert("更新しました");
+          router.push("/");
+        } else {
+          alert("更新に失敗しました");
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+      });
   };
 
   return (
     <>
-      <h3>更新 id: {router.query.id}</h3>
-      <div>{todo.id}</div>
-      <TextField
-        id="name"
-        autoFocus
-        margin="dense"
-        type="text"
-        variant="standard"
-        label="タイトル"
-        value={updateParam.name}
-        onChange={changeName}
-      />
-      <TextField
-        autoFocus
-        margin="dense"
-        type="text"
-        variant="standard"
-        label="内容"
-        value={updateParam.description}
-        onChange={changeDescription}
-      />
-      <Button onClick={update}></Button>
+      <Box>
+        <TextField
+          id="name"
+          autoFocus
+          margin="dense"
+          type="text"
+          variant="standard"
+          label="タイトル"
+          value={updateParam.name}
+          onChange={changeName}
+        />
+        <TextField
+          autoFocus
+          margin="dense"
+          type="text"
+          variant="standard"
+          label="内容"
+          value={updateParam.description}
+          onChange={changeDescription}
+        />
+        <Button onClick={update}>更新</Button>
+      </Box>
     </>
   );
 };
